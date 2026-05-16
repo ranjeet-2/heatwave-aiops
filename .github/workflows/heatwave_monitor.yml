@@ -26,3 +26,9 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           EE_PROJECT_ID: ${{ secrets.EE_PROJECT_ID }}
         run: python src/main.py
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:    
+          name: heatwave-report
+          path: outputs/
