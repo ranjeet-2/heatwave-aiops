@@ -1,3 +1,16 @@
+import os
+import requests
+
+# Read secrets from GitHub Actions environment variables
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+EE_PROJECT_ID = os.getenv("EE_PROJECT_ID", "ee-ranjeetramchandraug20")
+
+print("Checking GitHub Secrets...")
+print("TELEGRAM_BOT_TOKEN loaded:", TELEGRAM_BOT_TOKEN is not None)
+print("TELEGRAM_CHAT_ID loaded:", TELEGRAM_CHAT_ID is not None)
+print("EE_PROJECT_ID:", EE_PROJECT_ID)
+
 !pip install earthengine-api geemap
 
 import ee
@@ -5,7 +18,7 @@ import geemap
 
 ee.Authenticate()
 ee.Initialize(
-    project = "ee-ranjeetramchandraug20",
+    project = EE_PROJECT_ID,
     opt_url='https://earthengine-highvolume.googleapis.com'
 )
 
@@ -92,11 +105,35 @@ print('Z-score:', z)
 if z > 2:
     print('Concept drift detected')
 
-def generate_alert(mean_temp, z):
-    if z > 2:
-        print(f'ALERT: Heatwave detected! Mean Temp = {mean_temp:.2f}°C, z = {z:.2f}')
+def generate_alert(mean_temp, z, pred_temp, risk):
+    """
+    Generate and send Telegram alert when severe heatwave is detected.
+    """
 
-generate_alert(current_mean, z)
+    if risk in ["Severe", "Extreme"]:
+        message = (
+            f"🔥 Heatwave Alert!\n\n"
+            f"Current Mean Temperature: {mean_temp:.2f} °C\n"
+            f"Predicted Next-Day Temperature: {pred_temp:.2f} °C\n"
+            f"Z-Score: {z:.2f}\n"
+            f"Risk Level: {risk}\n"
+            f"Timestamp (UTC): {datetime.utcnow().isoformat()}"
+        )
+
+        print(message)
+
+        # Send to Telegram
+        send_telegram_alert(message)
+
+    else:
+        print(f"No alert. Risk level = {risk}")
+
+generate_alert(
+    mean_temp=current_mean,
+    z=z,
+    pred_temp=pred_temp,
+    risk=risk
+)
 
 def safe_run(func, retries=3):
     for i in range(retries):
@@ -186,9 +223,48 @@ run_pipeline()
 #     time.sleep(60)
 
 
+def send_telegram_alert(message):
+    """
+    Send alert message to Telegram.
+    Uses TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID from GitHub Secrets.
+    """
+
+    if TELEGRAM_BOT_TOKEN is None or TELEGRAM_CHAT_ID is None:
+        print("Telegram credentials not found. Alert not sent.")
+        print(message)
+        return
+
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+
+    payload = {
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": message
+    }
+
+    try:
+        response = requests.post(url, data=payload, timeout=30)
+
+        if response.status_code == 200:
+            print("Telegram alert sent successfully.")
+        else:
+            print("Failed to send Telegram alert.")
+            print(response.text)
+
+    except Exception as e:
+        print("Telegram sending error:", e)
+
+
 def main():
-    print("Running Geospatial AIOps Pipeline...")
-    # Paste all your code here
+    print("=" * 60)
+    print("Starting Geospatial AIOps Heatwave Pipeline")
+    print("=" * 60)
+
+    # Put all your existing code here
+
+    print("=" * 60)
+    print("Pipeline completed successfully")
+    print("=" * 60)
+
 
 if __name__ == "__main__":
     main()
