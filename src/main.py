@@ -238,6 +238,7 @@ record = pd.DataFrame([{
 os.makedirs("outputs", exist_ok=True)
 record.to_csv("outputs/daily_heatwave_report.csv", index=False)
 
+import geemap
 def export_map(image, vis_params, filename):
     os.makedirs("outputs", exist_ok=True)
 
