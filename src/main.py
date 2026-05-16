@@ -265,9 +265,9 @@ export_map(current, "outputs/current_lst.tif")
 export_map(anomaly, "outputs/anomaly.tif")
 export_map(heatwave.selfMask(), "outputs/heatwave_mask.tif")
 
-export_map(current, "outputs/current_lst.png")
-export_map(anomaly, "outputs/anomaly.png")
-export_map(heatwave.selfMask(), "outputs/heatwave_mask.png")
+# export_map(current, "outputs/current_lst.png")
+# export_map(anomaly, "outputs/anomaly.png")
+# export_map(heatwave.selfMask(), "outputs/heatwave_mask.png")
 
 # from datetime import datetime
 
