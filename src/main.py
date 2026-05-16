@@ -12,12 +12,25 @@ print("TELEGRAM_CHAT_ID loaded:", TELEGRAM_CHAT_ID is not None)
 print("EE_PROJECT_ID:", EE_PROJECT_ID)
 
 
+import json
+from google.oauth2 import service_account
 import ee
-# import geemap
+import os
+
+EE_PROJECT_ID = os.getenv("EE_PROJECT_ID")
+EE_SERVICE_ACCOUNT_JSON = os.getenv("EE_SERVICE_ACCOUNT_JSON")
+
+credentials_info = json.loads(EE_SERVICE_ACCOUNT_JSON)
+
+credentials = service_account.Credentials.from_service_account_info(
+    credentials_info,
+    scopes=["https://www.googleapis.com/auth/cloud-platform"]
+)
 
 ee.Initialize(
-    project = EE_PROJECT_ID,
-    opt_url='https://earthengine-highvolume.googleapis.com'
+    credentials=credentials,
+    project=EE_PROJECT_ID,
+    opt_url="https://earthengine-highvolume.googleapis.com"
 )
 
 roi = ee.Geometry.Point([77.89, 29.87]).buffer(50000)
