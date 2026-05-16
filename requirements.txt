@@ -3,4 +3,5 @@ geemap
 numpy
 pandas
 scikit-learn
+schedule
 requests
