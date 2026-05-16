@@ -15,6 +15,7 @@ print("EE_PROJECT_ID:", EE_PROJECT_ID)
 import json
 from google.oauth2 import service_account
 import ee
+import geemap
 import os
 
 EE_PROJECT_ID = os.getenv("EE_PROJECT_ID")
@@ -238,7 +239,6 @@ record = pd.DataFrame([{
 os.makedirs("outputs", exist_ok=True)
 record.to_csv("outputs/daily_heatwave_report.csv", index=False)
 
-import geemap
 def export_map(image, vis_params, filename):
     os.makedirs("outputs", exist_ok=True)
 
