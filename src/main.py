@@ -11,24 +11,16 @@ print("TELEGRAM_BOT_TOKEN loaded:", TELEGRAM_BOT_TOKEN is not None)
 print("TELEGRAM_CHAT_ID loaded:", TELEGRAM_CHAT_ID is not None)
 print("EE_PROJECT_ID:", EE_PROJECT_ID)
 
-!pip install earthengine-api geemap
 
 import ee
-import geemap
+# import geemap
 
-ee.Authenticate()
 ee.Initialize(
     project = EE_PROJECT_ID,
     opt_url='https://earthengine-highvolume.googleapis.com'
 )
 
-
-
-map = geemap.Map()
-map
-
-roi = map.draw_last_feature.geometry()
-roi
+roi = ee.Geometry.Point([77.89, 29.87]).buffer(50000)
 
 from datetime import datetime, timedelta
 
@@ -66,11 +58,11 @@ zscore = anomaly.divide(std_img)
 
 heatwave = zscore.gt(2)
 
-Map = geemap.Map(center=[29.87, 77.89], zoom=8)
-Map.addLayer(current.clip(roi), {'min': 25, 'max': 50}, 'Current LST')
-Map.addLayer(anomaly.clip(roi), {'min': -5, 'max': 5}, 'Anomaly')
-Map.addLayer(heatwave.selfMask().clip(roi), {'palette': ['red']}, 'Heatwave')
-Map
+# Map = geemap.Map(center=[29.87, 77.89], zoom=8)
+# Map.addLayer(current.clip(roi), {'min': 25, 'max': 50}, 'Current LST')
+# Map.addLayer(anomaly.clip(roi), {'min': -5, 'max': 5}, 'Anomaly')
+# Map.addLayer(heatwave.selfMask().clip(roi), {'palette': ['red']}, 'Heatwave')
+# Map
 
 stats = current.reduceRegion(
     reducer=ee.Reducer.mean(),
@@ -78,15 +70,20 @@ stats = current.reduceRegion(
     scale=1000,
     maxPixels=1e13
 )
-print(stats.getInfo())
 
-geemap.ee_export_image_to_drive(
-    current.clip(roi),
-    description='current_lst',
-    folder='GEE_Outputs',
-    region=roi,
-    scale=1000
-)
+stats_dict = stats.getInfo()
+print(stats_dict)
+
+current_mean = list(stats_dict.values())[0]
+print(f"Current Mean Temperature: {current_mean:.2f} °C")
+
+# geemap.ee_export_image_to_drive(
+#     current.clip(roi),
+#     description='current_lst',
+#     folder='GEE_Outputs',
+#     region=roi,
+#     scale=1000
+# )
 
 from sklearn.ensemble import IsolationForest
 import numpy as np
@@ -97,7 +94,6 @@ labels = model.fit_predict(series)
 print(labels)
 
 historical_mean = 38
-current_mean = 43
 std = 2
 z = (current_mean - historical_mean) / std
 print('Z-score:', z)
@@ -128,12 +124,35 @@ def generate_alert(mean_temp, z, pred_temp, risk):
     else:
         print(f"No alert. Risk level = {risk}")
 
-generate_alert(
-    mean_temp=current_mean,
-    z=z,
-    pred_temp=pred_temp,
-    risk=risk
-)
+def send_telegram_alert(message):
+    """
+    Send alert message to Telegram.
+    Uses TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID from GitHub Secrets.
+    """
+
+    if TELEGRAM_BOT_TOKEN is None or TELEGRAM_CHAT_ID is None:
+        print("Telegram credentials not found. Alert not sent.")
+        print(message)
+        return
+
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+
+    payload = {
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": message
+    }
+
+    try:
+        response = requests.post(url, data=payload, timeout=30)
+
+        if response.status_code == 200:
+            print("Telegram alert sent successfully.")
+        else:
+            print("Failed to send Telegram alert.")
+            print(response.text)
+
+    except Exception as e:
+        print("Telegram sending error:", e)
 
 def safe_run(func, retries=3):
     for i in range(retries):
@@ -177,6 +196,13 @@ def classify_risk(temp, z):
 risk = classify_risk(pred_temp, z)
 print('Forecast Risk:', risk)
 
+generate_alert(
+    mean_temp=current_mean,
+    z=z,
+    pred_temp=pred_temp,
+    risk=risk
+)
+
 import pandas as pd
 from datetime import datetime
 
@@ -188,34 +214,31 @@ record = pd.DataFrame([{
     'risk': risk
 }])
 
-record.to_csv('daily_heatwave_report.csv', index=False)
+os.makedirs("outputs", exist_ok=True)
+record.to_csv("outputs/daily_heatwave_report.csv", index=False)
 
-!pip install schedule
-
-import schedule
-import time
 from datetime import datetime
 
-def run_pipeline():
-    print('=' * 60)
-    print('Running Geospatial AIOps Pipeline at', datetime.utcnow())
-    print('=' * 60)
+# def run_pipeline():
+#     print('=' * 60)
+#     print('Running Geospatial AIOps Pipeline at', datetime.utcnow())
+#     print('=' * 60)
 
-    # 1. Fetch latest EO data
-    # 2. Compute LST and anomalies
-    # 3. Predict next 1-3 days
-    # 4. Detect concept drift
-    # 5. Classify risk
-    # 6. Generate alerts
-    # 7. Save outputs
+#     # 1. Fetch latest EO data
+#     # 2. Compute LST and anomalies
+#     # 3. Predict next 1-3 days
+#     # 4. Detect concept drift
+#     # 5. Classify risk
+#     # 6. Generate alerts
+#     # 7. Save outputs
 
-    print('Pipeline completed successfully')
+#     print('Pipeline completed successfully')
 
 # Run every 6 hours (matching GFS forecast cycle)
-schedule.every(6).hours.do(run_pipeline)
+# schedule.every(6).hours.do(run_pipeline)
 
 # For Colab demonstration
-run_pipeline()
+# run_pipeline()
 
 # Optional continuous loop (uncomment for long-running environments)
 # while True:
@@ -223,43 +246,12 @@ run_pipeline()
 #     time.sleep(60)
 
 
-def send_telegram_alert(message):
-    """
-    Send alert message to Telegram.
-    Uses TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID from GitHub Secrets.
-    """
-
-    if TELEGRAM_BOT_TOKEN is None or TELEGRAM_CHAT_ID is None:
-        print("Telegram credentials not found. Alert not sent.")
-        print(message)
-        return
-
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-
-    payload = {
-        "chat_id": TELEGRAM_CHAT_ID,
-        "text": message
-    }
-
-    try:
-        response = requests.post(url, data=payload, timeout=30)
-
-        if response.status_code == 200:
-            print("Telegram alert sent successfully.")
-        else:
-            print("Failed to send Telegram alert.")
-            print(response.text)
-
-    except Exception as e:
-        print("Telegram sending error:", e)
-
-
 def main():
     print("=" * 60)
     print("Starting Geospatial AIOps Heatwave Pipeline")
     print("=" * 60)
 
-    # Put all your existing code here
+    # Put the complete pipeline code here
 
     print("=" * 60)
     print("Pipeline completed successfully")
