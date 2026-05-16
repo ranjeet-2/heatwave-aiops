@@ -239,26 +239,31 @@ record = pd.DataFrame([{
 os.makedirs("outputs", exist_ok=True)
 record.to_csv("outputs/daily_heatwave_report.csv", index=False)
 
-def export_map(image, vis_params, filename):
-    import geemap
+def export_map(image, filename):
+    """
+    Export Earth Engine image as GeoTIFF using direct download URL.
+    """
+    import requests
     import os
 
     os.makedirs("outputs", exist_ok=True)
 
-    geemap.ee_export_image(
-        image.visualize(**vis_params).clip(roi),
-        filename=filename,
-        scale=1000,
-        region=roi
-    )
+    url = image.clip(roi).getDownloadURL({
+        "scale": 1000,
+        "region": roi,
+        "format": "GEO_TIFF"
+    })
 
-export_map(current, {"min": 25, "max": 50}, "outputs/current_lst.tif")
-export_map(anomaly, {"min": -5, "max": 5}, "outputs/anomaly.tif")
-export_map(
-    heatwave.selfMask(),
-    {"palette": ["red"]},
-    "outputs/heatwave_mask.tif"
-)
+    response = requests.get(url, timeout=300)
+
+    with open(filename, "wb") as f:
+        f.write(response.content)
+
+    print(f"Saved: {filename}")
+
+export_map(current, "outputs/current_lst.tif")
+export_map(anomaly, "outputs/anomaly.tif")
+export_map(heatwave.selfMask(), "outputs/heatwave_mask.tif")
 
 # from datetime import datetime
 
