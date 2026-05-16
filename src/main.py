@@ -33,7 +33,15 @@ ee.Initialize(
     opt_url="https://earthengine-highvolume.googleapis.com"
 )
 
-roi = ee.Geometry.Point([77.89, 29.87]).buffer(50000)
+roi = ee.Geometry.Polygon([
+    [
+        [76.619608, 28.280196],
+        [76.619608, 30.012031],
+        [79.059302, 30.012031],
+        [79.059302, 28.280196],
+        [76.619608, 28.280196]
+    ]
+])
 
 from datetime import datetime, timedelta
 
@@ -230,7 +238,25 @@ record = pd.DataFrame([{
 os.makedirs("outputs", exist_ok=True)
 record.to_csv("outputs/daily_heatwave_report.csv", index=False)
 
-from datetime import datetime
+def export_map(image, vis_params, filename):
+    os.makedirs("outputs", exist_ok=True)
+
+    geemap.ee_export_image(
+        image.visualize(**vis_params).clip(roi),
+        filename=filename,
+        scale=1000,
+        region=roi
+    )
+
+export_map(current, {"min": 25, "max": 50}, "outputs/current_lst.tif")
+export_map(anomaly, {"min": -5, "max": 5}, "outputs/anomaly.tif")
+export_map(
+    heatwave.selfMask(),
+    {"palette": ["red"]},
+    "outputs/heatwave_mask.tif"
+)
+
+# from datetime import datetime
 
 # def run_pipeline():
 #     print('=' * 60)
