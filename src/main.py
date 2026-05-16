@@ -240,6 +240,9 @@ os.makedirs("outputs", exist_ok=True)
 record.to_csv("outputs/daily_heatwave_report.csv", index=False)
 
 def export_map(image, vis_params, filename):
+    import geemap
+    import os
+
     os.makedirs("outputs", exist_ok=True)
 
     geemap.ee_export_image(
