@@ -237,7 +237,20 @@ record = pd.DataFrame([{
 }])
 
 os.makedirs("outputs", exist_ok=True)
-record.to_csv("outputs/daily_heatwave_report.csv", index=False)
+
+csv_path = "outputs/daily_heatwave_report.csv"
+
+if os.path.exists(csv_path):
+    existing = pd.read_csv(csv_path)
+    updated = pd.concat([existing, record], ignore_index=True)
+
+    # Remove duplicate timestamps if any
+    updated = updated.drop_duplicates(subset=["timestamp"], keep="last")
+else:
+    updated = record
+
+updated.to_csv(csv_path, index=False)
+print(f"Saved historical report to {csv_path}")
 
 def export_map(image, filename):
     """
