@@ -4,7 +4,7 @@ import requests
 # Read secrets from GitHub Actions environment variables
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-EE_PROJECT_ID = os.getenv("EE_PROJECT_ID")
+EE_PROJECT_ID = os.getenv("EE_PROJECT_ID", "ee-ranjeetramchandraug20")
 
 print("Checking GitHub Secrets...")
 print("TELEGRAM_BOT_TOKEN loaded:", TELEGRAM_BOT_TOKEN is not None)
