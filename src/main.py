@@ -241,25 +241,32 @@ record.to_csv("outputs/daily_heatwave_report.csv", index=False)
 
 def export_map(image, filename):
     """
-    Export Earth Engine image as GeoTIFF using direct download URL.
+    Export Earth Engine image as GeoTIFF.
+    If export fails due to permissions, continue without stopping pipeline.
     """
     import requests
     import os
 
     os.makedirs("outputs", exist_ok=True)
 
-    url = image.clip(roi).getDownloadURL({
-        "scale": 1000,
-        "region": roi,
-        "format": "GEO_TIFF"
-    })
+    try:
+        url = image.clip(roi).getDownloadURL({
+            "scale": 1000,
+            "region": roi,
+            "format": "GEO_TIFF"
+        })
 
-    response = requests.get(url, timeout=300)
+        response = requests.get(url, timeout=300)
+        response.raise_for_status()
 
-    with open(filename, "wb") as f:
-        f.write(response.content)
+        with open(filename, "wb") as f:
+            f.write(response.content)
 
-    print(f"Saved: {filename}")
+        print(f"Saved: {filename}")
+
+    except Exception as e:
+        print(f"Map export failed for {filename}: {e}")
+        print("Continuing pipeline without this map.")
 
 export_map(current, "outputs/current_lst.tif")
 export_map(anomaly, "outputs/anomaly.tif")
