@@ -5,8 +5,8 @@ permissions:
 
 on:
   schedule:
-    - cron: '*/10 * * * *'   # Every 10 minutes (testing)
-    # - cron: '0 */2 * * *'  # Every 2 hours (production)
+    # - cron: '*/10 * * * *'   # Every 10 minutes (testing)
+    - cron: '0 */2 * * *'  # Every 2 hours (production)
   workflow_dispatch:
 
 jobs:
