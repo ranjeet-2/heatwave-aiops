@@ -4,7 +4,7 @@ import requests
 # Read secrets from GitHub Actions environment variables
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-EE_PROJECT_ID = os.getenv("EE_PROJECT_ID", "ee-ranjeetramchandraug20")
+EE_PROJECT_ID = os.getenv("EE_PROJECT_ID")
 
 print("Checking GitHub Secrets...")
 print("TELEGRAM_BOT_TOKEN loaded:", TELEGRAM_BOT_TOKEN is not None)
@@ -15,7 +15,7 @@ print("EE_PROJECT_ID:", EE_PROJECT_ID)
 import json
 from google.oauth2 import service_account
 import ee
-import geemap
+# import geemap
 import os
 
 EE_PROJECT_ID = os.getenv("EE_PROJECT_ID")
@@ -265,9 +265,9 @@ export_map(current, "outputs/current_lst.tif")
 export_map(anomaly, "outputs/anomaly.tif")
 export_map(heatwave.selfMask(), "outputs/heatwave_mask.tif")
 
-export_map(current, "outputs/current_lst.png")
-export_map(anomaly, "outputs/anomaly.png")
-export_map(heatwave.selfMask(), "outputs/heatwave_mask.png")
+# export_map(current, "outputs/current_lst.png")
+# export_map(anomaly, "outputs/anomaly.png")
+# export_map(heatwave.selfMask(), "outputs/heatwave_mask.png")
 
 # from datetime import datetime
 
