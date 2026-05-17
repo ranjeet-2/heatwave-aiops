@@ -5,5 +5,7 @@ scikit-learn
 requests
 google-auth
 streamlit
+folium
+streamlit-folium
 rasterio
 matplotlib
