@@ -30,36 +30,46 @@ Real-time heatwave monitoring using:
 """)
 
 # --------------------------------------------------
-# Study Area Coordinates
+# Study Area Coordinates (Roorkee Bounding Box)
 # --------------------------------------------------
 roi_coords = [
-    [77.881397, 29.857022],
-    [77.881397, 29.875704],
-    [77.910503, 29.875704],
-    [77.910503, 29.857022],
-    [77.881397, 29.857022]
+    [29.857022, 77.881397],
+    [29.875704, 77.881397],
+    [29.875704, 77.910503],
+    [29.857022, 77.910503],
+    [29.857022, 77.881397]
 ]
 
 # --------------------------------------------------
 # Interactive Study Area Map
 # --------------------------------------------------
-st.subheader("🗺 Study Area")
+st.subheader("🗺 Study Area (Roorkee Bounding Box)")
 
-center_lat = (28.280196 + 30.012031) / 2
-center_lon = (76.619608 + 79.059302) / 2
+center_lat = (29.857022 + 29.875704) / 2
+center_lon = (77.881397 + 77.910503) / 2
 
-m = folium.Map(location=[center_lat, center_lon], zoom_start=7)
+m = folium.Map(
+    location=[center_lat, center_lon],
+    zoom_start=14,
+    tiles="OpenStreetMap"
+)
 
 folium.Polygon(
     locations=roi_coords,
     color="red",
     weight=3,
     fill=True,
-    fill_opacity=0.2,
-    popup="Study Area"
+    fill_color="red",
+    fill_opacity=0.25,
+    popup="Heatwave Monitoring ROI"
 ).add_to(m)
 
-st_folium(m, width=900, height=500)
+folium.Marker(
+    [center_lat, center_lon],
+    popup="Roorkee Study Area"
+).add_to(m)
+
+st_folium(m, width=1000, height=500)
 
 # --------------------------------------------------
 # Load CSV
