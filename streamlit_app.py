@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import os
+import rasterio
+import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="Geospatial AIOps Heatwave Dashboard", layout="wide")
 
@@ -11,7 +13,6 @@ csv_path = "outputs/daily_heatwave_report.csv"
 
 if os.path.exists(csv_path):
     df = pd.read_csv(csv_path)
-
     latest = df.iloc[-1]
 
     col1, col2, col3, col4 = st.columns(4)
@@ -27,28 +28,29 @@ if os.path.exists(csv_path):
     st.subheader("Temperature Trend")
     st.line_chart(df[["current_mean_temp", "predicted_next_day_temp"]])
 
-    # =========================================================
-    # Spatial Heatwave Maps Section
-    # =========================================================
+    # ======================================================
+    # Spatial Maps
+    # ======================================================
     st.subheader("Spatial Heatwave Maps")
 
-    for file_name, title in [
-        ("outputs/current_lst.png", "Current Land Surface Temperature"),
-        ("outputs/anomaly.png", "Temperature Anomaly"),
-        ("outputs/heatwave_mask.png", "Heatwave Mask")
-    ]:
-        if os.path.exists(file_name):
-            st.image(
-                file_name,
-                caption=title,
-                use_container_width=True
-            )
-        else:
-            st.info(f"{title} image not found yet.")
+    def show_tif(path, title):
+        if os.path.exists(path):
+            with rasterio.open(path) as src:
+                data = src.read(1)
 
-    # =========================================================
-    # Risk Alert Section
-    # =========================================================
+            fig, ax = plt.subplots(figsize=(8, 6))
+            im = ax.imshow(data)
+            ax.set_title(title)
+            plt.colorbar(im, ax=ax)
+
+            st.pyplot(fig)
+        else:
+            st.info(f"{title} not found yet.")
+
+    show_tif("outputs/current_lst.tif", "Current Land Surface Temperature")
+    show_tif("outputs/anomaly.tif", "Temperature Anomaly")
+    show_tif("outputs/heatwave_mask.tif", "Heatwave Mask")
+
     if latest["risk"] in ["Severe", "Extreme"]:
         st.error(f"⚠️ Heatwave Alert: {latest['risk']}")
     elif latest["risk"] == "Moderate":
