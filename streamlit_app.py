@@ -82,6 +82,9 @@ if os.path.exists(csv_path):
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     df = df.sort_values("timestamp")
 
+    # Show how many historical records are available
+    st.write(f"📌 Total historical records: {len(df)}")
+
     latest = df.iloc[-1]
 
     # --------------------------------------------------
