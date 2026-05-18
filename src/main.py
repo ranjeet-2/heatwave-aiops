@@ -187,57 +187,47 @@ def safe_run(func, retries=3):
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 
-# Example extracted recent temperatures (replace with actual EO-derived time series)
-# --------------------------------------------------
-# Forecast using actual historical observations
-# --------------------------------------------------
+# ==========================================================
+# Forecast using actual historical CSV data
+# ==========================================================
 csv_path = "outputs/daily_heatwave_report.csv"
 
 if os.path.exists(csv_path):
     hist_df = pd.read_csv(csv_path)
 
     if len(hist_df) >= 5:
-        recent_temps = hist_df["current_mean_temp"].tail(20).values
+        recent_temps = hist_df["current_mean_temp"].tail(50).values
     else:
-        recent_temps = np.array([
-            current_mean,
-            current_mean - 0.5,
-            current_mean + 0.3,
-            current_mean - 0.2,
-            current_mean
-        ])
+        recent_temps = np.array([current_mean])
 else:
-    recent_temps = np.array([
-        current_mean,
-        current_mean - 0.5,
-        current_mean + 0.3,
-        current_mean - 0.2,
-        current_mean
-    ])
+    recent_temps = np.array([current_mean])
 
-print("Recent temperatures used for forecasting:")
-print(recent_temps)
+# If insufficient history, use current temperature
+if len(recent_temps) < 3:
+    pred_temp = current_mean
+    predictions = [current_mean]
+    print("Insufficient historical data. Using current temperature as prediction.")
+else:
+    X = np.arange(len(recent_temps)).reshape(-1, 1)
+    y = recent_temps
 
-X = np.arange(len(recent_temps)).reshape(-1, 1)
-y = recent_temps
+    model = RandomForestRegressor(
+        n_estimators=200,
+        random_state=42
+    )
+    model.fit(X, y)
 
-model = RandomForestRegressor(
-    n_estimators=200,
-    random_state=42
-)
-model.fit(X, y)
+    future_X = np.arange(
+        len(recent_temps),
+        len(recent_temps) + 3
+    ).reshape(-1, 1)
 
-future_X = np.arange(
-    len(recent_temps),
-    len(recent_temps) + 3
-).reshape(-1, 1)
+    predictions = model.predict(future_X)
 
-predictions = model.predict(future_X)
+    for i, temp in enumerate(predictions, start=1):
+        print(f"Day +{i} predicted temperature: {temp:.2f} °C")
 
-for i, temp in enumerate(predictions, start=1):
-    print(f"Day +{i} predicted temperature: {temp:.2f} °C")
-
-pred_temp = float(predictions[0])
+    pred_temp = float(predictions[0])
 
 def classify_risk(temp, z):
     if z > 3 or temp > 45:
